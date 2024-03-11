@@ -18,10 +18,6 @@ discord_auth = DiscordAuth(CLIENT_ID, CLIENT_SECRET, CALLBACK_URL)
 
 app = FastAPI()
 
-if __name__ == '__main__':
-    load_dotenv()
-    uvicorn.run("main:app", host="127.0.0.1", port=8000)
-
 
 @app.get('/')
 def home():
@@ -63,3 +59,6 @@ def user(access_token: AccessToken):
 @app.get("/users/{user_id}")
 async def read_item(user_id):
     return {"nick": utils.get_name(user_id)}
+
+if __name__ == '__main__':
+    uvicorn.run("main:app", host="127.0.0.1", port=8000)
