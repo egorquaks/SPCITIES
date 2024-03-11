@@ -2,24 +2,24 @@ import os
 
 import uvicorn
 from discord_oauth2 import DiscordAuth
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
 import utils
 
+load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-CALLBACK_URL = os.getenv("http://localhost:1500/api/auth/discord/rediresct")
+CALLBACK_URL = os.getenv("CALLBACK_URL")
 
 discord_auth = DiscordAuth(CLIENT_ID, CLIENT_SECRET, CALLBACK_URL)
 
 app = FastAPI()
 
 if __name__ == '__main__':
-    CLIENT_ID = os.getenv("CLIENT_ID")
-    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-    CALLBACK_URL = os.getenv("http://localhost:1500/api/auth/discord/rediresct")
+    load_dotenv()
     uvicorn.run("main:app", host="127.0.0.1", port=8000)
 
 
