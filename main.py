@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from pydantic import BaseModel
-from starlette.responses import RedirectResponse, Response
+from starlette.responses import RedirectResponse, Response, HTMLResponse
 from aiohttp import ClientSession
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 
 import utils
 from jwt_utils import get_db_user, is_authed, gen_jwt
@@ -20,6 +22,8 @@ CALLBACK_URL = os.getenv("CALLBACK_URL")
 discord_auth = DiscordAuth(CLIENT_ID, CLIENT_SECRET, CALLBACK_URL)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 discord_oauth2 = OAuth2AuthorizationCodeBearer(
     authorizationUrl="https://discord.com/api/oauth2/authorize",
@@ -75,14 +79,17 @@ async def user(access_token: AccessToken):
     return user_data
 
 
-@app.get("/users/{user_id}")
+@app.get("/users/{user_id}", response_class=HTMLResponse)
 async def read_item(user_id, request: Request):
-    name = await utils.get_name(user_id)
     if not is_authed(request.cookies.get('Authorization')):
         return "динаху"
+
+    name = await utils.get_name(user_id)
     if name is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    return {"nick": name}
+    return templates.TemplateResponse(
+        request=request, name="profile.html", context={"user_id": user_id, "name": name}
+    )
 
 
 if __name__ == '__main__':
