@@ -27,11 +27,11 @@ def get_db_user(uuid: str):
 
 
 def gen_jwt(uuid):
-    return jwt.encode({'key': uuid}, SECRET, algorithm='HS256')
+    return jwt.encode({'key': uuid}, JWT_SECRET, algorithm='HS256')
 
 
 def decode_jwt(token):
-    return jwt.decode(token, SECRET, algorithms=['HS256'])
+    return jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
 
 
 def is_authed(jwt_token: str):
