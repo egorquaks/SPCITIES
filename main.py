@@ -1,16 +1,16 @@
-import asyncio
 import os
 
 import uvicorn
 from discord_oauth2 import DiscordAuth
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from pydantic import BaseModel
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 from aiohttp import ClientSession
 
 import utils
+from jwt_utils import get_db_user, is_authed, gen_jwt
 
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -39,7 +39,7 @@ async def login():
 
 
 @app.get('/api/auth/discord/redirect')
-async def callback(code: str):
+async def callback(code: str, response: Response):
     async with ClientSession() as session:
         token_payload = {
             "client_id": CLIENT_ID,
@@ -58,8 +58,11 @@ async def callback(code: str):
             "Authorization": f"Bearer {access_token}"
         }
         user_response = await session.get("https://discord.com/api/users/@me", headers=headers)
-        user_data = await user_response.json()
-    return {"user": user_data}
+        user_uuid = (await user_response.json())["id"]
+        token = gen_jwt(user_uuid)
+        response.set_cookie(key="Authorization", value=token)
+
+    return get_db_user(uuid=str(user_uuid))  # {"jwt": token}
 
 
 class AccessToken(BaseModel):
@@ -68,13 +71,15 @@ class AccessToken(BaseModel):
 
 @app.post('/user')
 async def user(access_token: AccessToken):
-    user_data = await discord_auth.get_user_data_from_token(access_token.access_token)
-    return await user_data
+    user_data = await utils.get_user_data_from_token(access_token.access_token)
+    return user_data
 
 
 @app.get("/users/{user_id}")
-async def read_item(user_id):
+async def read_item(user_id, request: Request):
     name = await utils.get_name(user_id)
+    if not is_authed(request.cookies.get('Authorization')):
+        return "динаху"
     if name is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     return {"nick": name}
