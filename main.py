@@ -5,14 +5,14 @@ from discord_oauth2 import DiscordAuth
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from pydantic import BaseModel
 from starlette.responses import RedirectResponse, Response, HTMLResponse
 from aiohttp import ClientSession
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-import utils
-from jwt_utils import get_db_user, is_authed, gen_jwt
+from database import add_user
+from jwt_utils import gen_jwt, decode_jwt, is_authed
+from utils import get_name
 
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -31,15 +31,33 @@ discord_oauth2 = OAuth2AuthorizationCodeBearer(
 )
 
 
-@app.get('/')
-async def home():
-    return {"message": "api"}
+@app.get('/', response_class=HTMLResponse)
+async def home(request: Request):
+    is_authed_ = is_authed(request.cookies.get('Authorization'))
+    if is_authed_:
+        name = decode_jwt(request.cookies.get('Authorization'))['name']
+        uuid = decode_jwt(request.cookies.get('Authorization'))['uuid']
+        return templates.TemplateResponse(
+            request=request, name="index.html", context={"is_authed": is_authed_, "name": name, "uuid": uuid}
+        )
+    else:
+        return templates.TemplateResponse(
+            request=request, name="index.html", context={"is_authed": is_authed_}
+        )
 
 
 @app.get('/login', response_class=RedirectResponse)
 async def login():
     redirect_url = f"https://discord.com/api/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={CALLBACK_URL}&response_type=code&scope=identify"
     return RedirectResponse(url=redirect_url)
+
+
+@app.get('/logout')
+async def logout(response: Response):
+    response.delete_cookie(key="Authorization")
+    response.headers["Location"] = "/"
+    response.status_code = 302
+    return response
 
 
 @app.get('/api/auth/discord/redirect')
@@ -63,32 +81,32 @@ async def callback(code: str, response: Response):
         }
         user_response = await session.get("https://discord.com/api/users/@me", headers=headers)
         user_uuid = (await user_response.json())["id"]
-        token = gen_jwt(user_uuid)
-        response.set_cookie(key="Authorization", value=token)
+        add_user(user_uuid)
+        token = await gen_jwt(user_uuid)
+        response.set_cookie(key="Authorization", value=token, max_age=604800)
+        response.headers["Location"] = "/"
+        response.status_code = 302
+    return response
 
-    return get_db_user(uuid=str(user_uuid))  # {"jwt": token}
-
-
-class AccessToken(BaseModel):
-    access_token: str
-
-
-@app.post('/user')
-async def user(access_token: AccessToken):
-    user_data = await utils.get_user_data_from_token(access_token.access_token)
-    return user_data
+# @app.post('/user')
+# async def user(access_token: AccessToken):
+#     user_data = await get_user_data_from_token(access_token.access_token)
+#     return user_data
 
 
 @app.get("/users/{user_id}", response_class=HTMLResponse)
 async def read_item(user_id, request: Request):
-    if not is_authed(request.cookies.get('Authorization')):
+    is_authed_ = is_authed(request.cookies.get('Authorization'))
+    if not is_authed_:
         return "динаху"
-
-    name = await utils.get_name(user_id)
+    name = await get_name(user_id)
     if name is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    client_uuid = decode_jwt(request.cookies.get('Authorization'))['uuid']
+    client_name = decode_jwt(request.cookies.get('Authorization'))['name']
     return templates.TemplateResponse(
-        request=request, name="profile.html", context={"user_id": user_id, "name": name}
+        request=request, name="user_profile.html",
+        context={"is_authed": is_authed_, "name": name, "client_name": client_name, "client_uuid": client_uuid}
     )
 
 

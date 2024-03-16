@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPCITIES</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: right;
+            padding: 10px;
+            height: 64px;
+        }
+
+        .header img {
+            height: 100%;
+            width: auto;
+        }
+
+        .btn-login {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .user-profile img {
+            height: 40px;
+            width: auto;
+            margin-left: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        .user-info img {
+            height: 200px;
+            width: auto;
+            margin-right: 20px;
+        }
+
+        .user-details {
+            margin-top: 20px;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                text-align: center;
+            }
+
+            .user-info img {
+                height: 120px;
+                margin-right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        {% if is_authed %}
+            <div class="user-profile">
+                <a href="/users/{{ client_uuid }}" class="btn-login">Профиль</a>
+                <a onclick="deleteCookieAndReload('Authorization')" class="btn-login">Выйти</a>
+                <div class="user-profile-image">
+                    <img src="https://visage.surgeplay.com/face/512/{{ client_name }}" alt="Your Image">
+                </div>
+            </div>
+        {% else %}
+            <a href="/login" class="btn-login">Войти</a>
+        {% endif %}
+    </div>
+    {% if is_authed %}
+        <div class="user-info">
+            <div class="user-image">
+                <img src="https://visage.surgeplay.com/bust/512/{{ name }}" alt="Your Image">
+            </div>
+            <div class="user-details">
+                <h1>{{ name }}</h1>
+                <p>Должность: Лид-разработчик</p>
+                <p>Статус: Активен</p>
+                <p>Профессия: Программист</p>
+                <p>Награды: Награда за лучший проект 2023 года</p>
+            </div>
+        </div>
+
+    {% else %}
+
+    {% endif %}
+</div>
+
+<script>
+    function deleteCookieAndReload(cookieName) {
+        document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        location.replace("/");
+    }
+</script>
+
+</body>
+</html>

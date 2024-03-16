@@ -5,17 +5,17 @@ from base64 import b64encode
 
 from aiohttp import ClientSession
 
-import main
+load_dotenv()
+CARD_ID = os.getenv("CARD_ID")
+CARD_TOKEN = os.getenv("CARD_TOKEN")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 
 async def get_name(discord_id):
     async with ClientSession() as session:
-        load_dotenv()
-        card_id = os.getenv("CARD_ID")
-        card_token = os.getenv("CARD_TOKEN")
-
         headers = {
-            'Authorization': f"Bearer {str(b64encode(str(f'{card_id}:{card_token}').encode('utf-8')), 'utf-8')}"
+            'Authorization': f"Bearer {str(b64encode(str(f'{CARD_ID}:{CARD_TOKEN}').encode('utf-8')), 'utf-8')}"
         }
 
         url = 'https://spworlds.ru/api/public/users/' + discord_id
@@ -31,8 +31,8 @@ async def get_name(discord_id):
 async def refresh_token(refresh_token1):
     async with ClientSession() as session:
         data = {
-            'client_id': main.CLIENT_ID,
-            'client_secret': main.CLIENT_SECRET,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
             'grant_type': 'refresh_token',
             'refresh_token': refresh_token1
         }
