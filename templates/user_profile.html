@@ -91,7 +91,7 @@
     <div class="header">
         {% if is_authed %}
             <div class="user-profile">
-                <a href="/users/{{ client_uuid }}" class="btn-login">Профиль</a>
+                <a href="/" class="btn-login">Главная</a>
                 <a onclick="deleteCookieAndReload('Authorization')" class="btn-login">Выйти</a>
                 <div class="user-profile-image">
                     <img src="https://visage.surgeplay.com/face/512/{{ client_name }}" alt="Your Image">

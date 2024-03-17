@@ -70,6 +70,7 @@
     <div class="header">
         {% if is_authed %}
             <div class="user-profile">
+                <a href="https://github.com/yankochur" class="btn-login">Пригласить бота</a>
                 <a href="/users/{{ uuid }}" class="btn-login">Профиль</a>
                 <a onclick="deleteCookieAndReload('Authorization')" class="btn-login">Выйти</a>
                 <div class="user-profile-image">
@@ -77,7 +78,10 @@
                 </div>
             </div>
         {% else %}
-            <a href="/login" class="btn-login">Войти</a>
+            <div class="user-profile">
+                <a href="https://github.com/yankochur" class="btn-login">Пригласить бота</a>
+                <a href="/login" class="btn-login">Войти</a>
+            </div>
         {% endif %}
     </div>
     {% if is_authed %}
@@ -85,7 +89,7 @@
         <p>Как дела?</p>
     {% else %}
         <h1>Добро пожаловать</h1>
-        <p>Войдите чтобы начать работу с сайтом</p>
+        <p>Войдите, чтобы начать работу с сайтом</p>
     {% endif %}
 </div>
 
