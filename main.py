@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import uvicorn
@@ -10,7 +11,7 @@ from aiohttp import ClientSession
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-from database import add_user
+import database
 from jwt_utils import gen_jwt, decode_jwt, is_authed
 from utils import get_name
 
@@ -52,14 +53,6 @@ async def login():
     return RedirectResponse(url=redirect_url)
 
 
-@app.get('/logout')
-async def logout(response: Response):
-    response.delete_cookie(key="Authorization")
-    response.headers["Location"] = "/"
-    response.status_code = 302
-    return response
-
-
 @app.get('/api/auth/discord/redirect')
 async def callback(code: str, response: Response):
     async with ClientSession() as session:
@@ -81,17 +74,16 @@ async def callback(code: str, response: Response):
         }
         user_response = await session.get("https://discord.com/api/users/@me", headers=headers)
         user_uuid = (await user_response.json())["id"]
-        add_user(user_uuid)
+        await database.add_user(user_uuid)
+        # TEST
+        await database.add_user("508668125680500739", "304890931008503808", "668345801193422848", "367908120787288086")
+        await database.remove_user("508668125680500739", "304890931008503808", "668345801193422848", "123")
+        # TEST
         token = await gen_jwt(user_uuid)
         response.set_cookie(key="Authorization", value=token, max_age=604800)
         response.headers["Location"] = "/"
         response.status_code = 302
     return response
-
-# @app.post('/user')
-# async def user(access_token: AccessToken):
-#     user_data = await get_user_data_from_token(access_token.access_token)
-#     return user_data
 
 
 @app.get("/users/{user_id}", response_class=HTMLResponse)
@@ -111,4 +103,5 @@ async def read_item(user_id, request: Request):
 
 
 if __name__ == '__main__':
+    asyncio.run(database.init())
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
