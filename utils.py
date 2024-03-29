@@ -1,4 +1,8 @@
+import logging
 import os
+import time
+from email.utils import formatdate
+
 from dotenv import load_dotenv
 
 from base64 import b64encode
@@ -10,6 +14,7 @@ CARD_ID = os.getenv("CARD_ID")
 CARD_TOKEN = os.getenv("CARD_TOKEN")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+CALLBACK_URL = os.getenv("CALLBACK_URL")
 
 
 async def get_name(discord_id):
@@ -45,10 +50,23 @@ async def refresh_token(refresh_token1):
         return await tokens.json()
 
 
-async def get_user_data_from_token(access_token):
+async def get_user_from_token(access_token):
     async with ClientSession() as session:
         headers = {
             "Authorization": f'Bearer {access_token}'
         }
         user_data = await session.get('https://discordapp.com/api/users/@me', headers=headers)
-        return await user_data.json()
+        return user_data
+
+
+async def get_code_data(code):
+    async with ClientSession() as session:
+        token_payload = {
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": CALLBACK_URL,
+            "scope": 'guilds%20identify'
+        }
+        return await session.post(url="https://discord.com/api/oauth2/token", data=token_payload)

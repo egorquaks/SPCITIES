@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from jose import jwt, JWTError
 from pydantic import BaseModel
 
-from utils import get_name
+from spw_utils import get_name
 
 UUID = "304890931008503808"
 load_dotenv()

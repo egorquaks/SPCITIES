@@ -2,7 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import Column, ForeignKey, delete
+from sqlalchemy import Column, ForeignKey, delete, UniqueConstraint
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
@@ -36,6 +36,9 @@ class UserRoles(Base):
 
     user_id = Column(String, ForeignKey('users.user_id'), primary_key=True)
     role_id = Column(String, ForeignKey('roles.role_id'), primary_key=True)
+    # __table_args__ = (
+    #     UniqueConstraint('user_id', 'role_id', name='bebrochka'),
+    # )
 
 
 async def init():
